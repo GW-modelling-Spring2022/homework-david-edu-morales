@@ -1,10 +1,10 @@
 {
 	"folders": [
 		{
-			"path": "..\\Course-Materials22"
+			"path": "."
 		},
 		{
-			"path": "."
+			"path": "..\\Course-Materials22"
 		}
 	],
 	"settings": {}
