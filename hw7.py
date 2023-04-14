@@ -19,6 +19,11 @@ def theta(hb, b, hm):
             soil_sat[i] = 1
     return soil_sat
 
+# define formula for solving K_unsat
+def bcModel(Ks, b, theta):
+    K_unsat = Ks*theta**(2*b+3)
+    return K_unsat
+
 # create dictionary of soil properties
 d = {'texture': ['sand','loamy sand','sandy loam','silt loam','loam','clay loam','sandy clay','silty clay','clay'],
          'porosity' : [.395,.41,.435,.485,.451,.476,.426,.492,.482],
@@ -30,24 +35,28 @@ d = {'texture': ['sand','loamy sand','sandy loam','silt loam','loam','clay loam'
 
 # create dataframe of soil characteristics
 soil_properties = pd.DataFrame(d)
-soilList = soil_properties.texture.to_list()        # create a list of soil names
 soil_properties.set_index('texture', inplace=True)  # set soil names as index
+soil_index = soil_properties.index.to_list()        # create a list of soil names
 
 # %%
 # create dataframe to recieve sat. calculations
-saturation = pd.DataFrame(np.arange(-1000,0,0.01), columns=['hm'])
+matric_potentials = np.arange(-1000, 0, 0.1)
+saturation = pd.DataFrame(matric_potentials, columns=['hm'])
 saturation.set_index('hm',inplace=True)
 
-soil_index = soil_properties.index.to_list()
-
-for soil in soil_index:
+for k in soil_index:
     # fix parameter values
-    hb = soil_properties.loc[soil].hb   # fix air entry pressure for soil
-    b = soil_properties.loc[soil].b     # fix pore size distribution for soil
+    hb = soil_properties.loc[k].hb   # fix air entry pressure for soil
+    b = soil_properties.loc[k].b     # fix pore size distribution for soil
     hm = saturation.index.to_list()     # create list of matric potential values
-    saturation[soil] = theta(hb, b, hm)
+    saturation[k] = theta(hb, b, hm)
 
 # %%
-def bcModel(Ks, b, theta):
-    K_unsat = Ks*theta**(2*b+3)
-    return K_unsat
+K_unsat = saturation.copy()         # make a copy of sat. df for K_unsat calculations
+
+for k in soil_index:
+    Ks = soil_properties.loc[k].Ks  # fix Ksat for soil
+    b = soil_properties.loc[k].b    # fix pore size dist. for soil
+    K_unsat[k] = K_unsat[k].apply(lambda x: bcModel(Ks, b, x))
+
+# %%
