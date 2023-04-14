@@ -60,3 +60,45 @@ for k in soil_index:
     K_unsat[k] = K_unsat[k].apply(lambda x: bcModel(Ks, b, x))
 
 # %%
+saturation.index.to_list()
+# %%
+for k in soil_index:
+    plt.plot(saturation[k],matric_potentials, label=k)
+    plt.ylim(max(matric_potentials), min(matric_potentials))
+    plt.legend()
+plt.show()
+
+plt.figure(figsize=(5,10))
+for k in soil_index:
+
+    plt.plot(saturation[k],K_unsat[k], label=k)
+    plt.yscale('log')
+    plt.legend()
+
+# %%
+water_content = saturation.copy()
+
+for k in soil_index:
+    n = soil_properties.loc[k].porosity
+    water_content[k] =  water_content[k]*n
+# %%
+plt.figure(figsize=(5,8))
+for k in soil_index:
+    plt.plot(water_content[k],K_unsat[k], label=k)
+    plt.yscale('log')
+    plt.xlabel('Water content ('r'$\theta)$')
+    plt.ylabel('Hydraulic conductivity [cm/s]')
+    plt.title('Soil hydraulic conductivity function')
+    plt.legend()
+plt.show()
+
+plt.figure(figsize=(5,8))
+for k in soil_index:
+    plt.plot(water_content[k],matric_potentials, label=k)
+    plt.ylim(max(matric_potentials), min(matric_potentials))
+    plt.xlabel('Water content ('r'$\theta)$')
+    plt.ylabel('Matric head, h{} [cm]'.format('\N{LATIN SUBSCRIPT SMALL LETTER M}'))
+    plt.legend()
+    plt.title('Soil water characteristic curve')
+plt.show()
+# %%
