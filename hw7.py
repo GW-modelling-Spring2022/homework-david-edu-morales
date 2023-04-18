@@ -57,13 +57,13 @@ def infiltration_capacity(wc_initial, Ft, df):
     return infil_rate
 
 # Numerically integrate the water content for ea. soil w/ water table 1m below surface
-def water_content(hb, b, n):
+def wc_at_1m(hb, b, n):
     hb = hb*-1
     u = hb
     v = 100               # depth from surface to top of capillary fringe
     B = b-1
-    water_content = -n*(hb**(1/b))*(b/(b-1))*(u**(B/b)-v**(B/b))
-    return water_content
+    wc = -n*(hb**(1/b))*(b/(b-1))*(u**(B/b)-v**(B/b))
+    return wc
 
 # create dictionary of soil properties
 d = {'texture': ['sand','loamy sand','sandy loam','silt loam','loam','clay loam','sandy clay','silty clay','clay'],
@@ -128,17 +128,14 @@ for k in soil_index:
 plt.show()
 
 # %%
-
-
-# %%
 soil_prop_1m = soil_properties.copy()
 
-soil_prop_1m['water_content'] = soil_prop_1m.apply(lambda x: water_content(x.hb, x.b, x.porosity),
-                                                   axis=1)
+soil_prop_1m['water_content'] = soil_prop_1m.apply(lambda x: wc_at_1m(x.hb, x.b, x.porosity),axis=1)
 soil_prop_1m['depth'] = soil_prop_1m.apply(lambda x: 100+x.hb, axis=1)
 soil_prop_1m['storage_capacity'] = soil_prop_1m.apply(lambda x: x.depth*x.porosity-x.water_content, axis=1)
-
+soil_prop_1m
 # %%
+# Infiltration capacity for sand
 infiltration = np.arange(.05, 10, 0.05)
 sand_infil_capacity = pd.DataFrame(infiltration, columns=['F']); sand_time_to_infil = pd.DataFrame(infiltration, columns=['F'])
 sand_infil_capacity.set_index('F', inplace=True); sand_time_to_infil.set_index('F', inplace=True)
@@ -161,65 +158,7 @@ for k in sand_wc:
     plt.title('Infiltration capacity for Sand')
 
 # %%
-infiltration = np.arange(.05, 3, 0.05)
-cumulative_infil = pd.DataFrame(infiltration, columns=['F'])
-cumulative_infil.set_index('F', inplace=True)
-
-sand_wc = [0, 0.1, 0.2, 0.3, 0.394]
-
-def infiltration_capacity(wc_initial, Ft, df):
-    Ft_length = len(Ft)                 # count elements in matric potential list
-    index = np.arange(0, Ft_length, 1)  # set an index from zero to N of hm
-    infil = np.zeros(Ft_length)      # create an array as long as index
-
-    K = df.Ks
-    hm = abs(df.hm)
-    n = df.porosity
-    capacity = n-wc_initial
-
-    for i in index:
-
-        t = (1/K)*(Ft[i]-hm*capacity*np.log(1+(Ft[i]/(hm*capacity))))
-        infil[i] = t
-    return infil
-
-for k in sand_wc:
-    Ft = cumulative_infil.index.to_list()
-    cumulative_infil[str(k)] = infiltration_capacity(k, Ft, soil_properties.loc[['sand']])
-
-plt.figure(figsize=(8,5))
-for k in sand_wc:
-    plt.plot(cumulative_infil[str(k)], cumulative_infil.index.to_list(), label='initial soil moisture, '+str(k))
-    plt.xlabel('Time (seconds)')
-    plt.ylabel('Cumulative infiltration, F(t) [cm]')
-    plt.legend()
-    plt.title('Cumulative infiltration for Sand')
-
-plt.show()
-
-# %%
-infiltration = np.arange(.05, 3, 0.05)
-cumulative_infil = pd.DataFrame(infiltration, columns=['F'])
-cumulative_infil.set_index('F', inplace=True)
-
-clay_wc = [0, 0.1, 0.2, 0.3, 0.4, .482]
-
-for k in clay_wc:
-    Ft = cumulative_infil.index.to_list()
-    cumulative_infil[str(k)] = infiltration_capacity(k, Ft, soil_properties.loc[['clay']])
-
-plt.figure(figsize=(8,5))
-for k in clay_wc:
-    plt.plot(cumulative_infil[str(k)], cumulative_infil.index.to_list(), label='initial soil moisture, '+str(k))
-    plt.xlabel('Time (seconds)')
-    plt.ylabel('Cumulative infiltration, F(t) [cm]')
-    plt.legend()
-    plt.title('Cumulative infiltration for Clay')
-
-plt.show()
-
-# %%
-infiltration = np.arange(.05, 10, 0.05)
+# Infiltration capacity for clay
 clay_infil_capacity = pd.DataFrame(infiltration, columns=['F']); clay_time_to_infil = pd.DataFrame(infiltration, columns=['F'])
 clay_infil_capacity.set_index('F', inplace=True); clay_time_to_infil.set_index('F', inplace=True)
 
@@ -239,8 +178,9 @@ for k in clay_wc:
     plt.semilogx()
     #plt.ylim(0,.2)
     plt.title('Infiltration capacity for Clay')
+
 # %%
-infiltration = np.arange(.05, 10, 0.05)
+# Infiltration capacity for loam
 loam_infil_capacity = pd.DataFrame(infiltration, columns=['F']); loam_time_to_infil = pd.DataFrame(infiltration, columns=['F'])
 loam_infil_capacity.set_index('F', inplace=True); loam_time_to_infil.set_index('F', inplace=True)
 
@@ -260,4 +200,5 @@ for k in loam_wc:
     plt.semilogx()
     #plt.ylim(0,.2)
     plt.title('Infiltration capacity for Loam')
+
 # %%
